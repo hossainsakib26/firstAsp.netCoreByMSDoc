@@ -20,9 +20,36 @@ namespace My_CoreApp_MicrosoftDoc.Controllers
         }
 
         // GET: Movies
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string movieGenre, string searchString)
         {
-            return View(await _context.Movie.ToListAsync());
+            //return View(await _context.Movie.ToListAsync());
+
+            IQueryable<string> genreQuery = from m in _context.Movie orderby m.Genre select m.Genre;
+
+            var movies = from m in _context.Movie select m; //creates a LINQ query to select the movies
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                movies = movies.Where(s => s.Title.Contains(searchString));
+            }
+
+            if (!String.IsNullOrEmpty(movieGenre))
+            {
+                movies = movies.Where(x => x.Genre == movieGenre);
+            }
+
+            var movieGenreVm = new MovieGenreViewModel
+            {
+                Genres = new SelectList(await genreQuery.Distinct().ToListAsync()),
+                Movies = await movies.ToListAsync(),
+            };
+
+            return View(movieGenreVm);
+        }
+
+        [HttpPost]
+        public string Index(string searchString, bool notUsed)
+        {
+            return "Form [HttpPost]Index: Filter on" + searchString;
         }
 
         // GET: Movies/Details/5
